@@ -6,7 +6,7 @@ function daysSinceCreation(createdAt) {
   const currentDate = new Date();
 
   // 時間の差をミリ秒で計算
-  const timeDifference = currentDate - createdDate;
+  const timeDifference = currentDate.getTime() - createdDate.getTime();
 
   // 1日は 1000ミリ秒 × 60秒 × 60分 × 24時間
   const oneDayInMilliseconds = 1000 * 60 * 60 * 24;

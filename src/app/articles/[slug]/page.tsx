@@ -2,7 +2,27 @@ import { sanityClient } from "@/libs/client";
 import Image from "next/image";
 import BlockContent from "@sanity/block-content-to-react";
 
-async function getPostsData(slug) {
+interface Post {
+  _id: string;
+  title: string;
+  author: {
+    name: string;
+    image: {
+      asset: {
+        _id: string;
+        url: string;
+      };
+    };
+  };
+  mainImageUrl: string;
+  _createdAt: string;
+  slug: {
+    current: string;
+  };
+  body: any[]; // 必要に応じて適切な型に変更してください
+}
+
+async function getPostsData(slug: string): Promise<Post> {
   const query = `*[_type == "post" && slug.current == $slug][0]{
       _id,
       title,
@@ -27,13 +47,12 @@ async function getPostsData(slug) {
   return res;
 }
 
-function daysSinceCreation(createdAt) {
+function daysSinceCreation(createdAt: string) {
   const createdDate = new Date(createdAt);
   const currentDate = new Date();
 
   // 時間の差をミリ秒で計算
-  const timeDifference = currentDate - createdDate;
-
+  const timeDifference = currentDate.getTime() - createdDate.getTime();
   // 1日は 1000ミリ秒 × 60秒 × 60分 × 24時間
   const oneDayInMilliseconds = 1000 * 60 * 60 * 24;
 
@@ -49,12 +68,39 @@ function daysSinceCreation(createdAt) {
   return `${daysSince} 日前`;
 }
 
-const CustomParagraph = (props) => (
+
+interface CustomParagraphProps {
+  children: React.ReactNode;
+}
+interface CustomHeadingProps {
+  node: {
+    style: string;
+  };
+  children: React.ReactNode;
+}
+interface CustomQuoteProps {
+  children: React.ReactNode;
+}
+interface CustomListItemProps {
+  children: React.ReactNode;
+}
+interface CustomLinkProps {
+  mark: {
+    href: string;
+  };
+  children: React.ReactNode;
+}
+interface ArticlePageProps {
+  params: {
+    slug: string;
+  };
+}
+const CustomParagraph: React.FC<CustomParagraphProps> = (props) => (
   <p className="text-base sm:text-lg mb-4">{props.children}</p>
 );
 
-const CustomHeading = (props) => {
-  const Tag = props.node.style;
+const CustomHeading: React.FC<CustomHeadingProps> = (props) => {
+  const Tag: any = props.node.style;
   return (
     <Tag className="py-1 sm:py-2 px-2 sm:px-5 border-b-4 sm:border-b-8 border-blue-500 w-fit mx-auto font-bold text-xl sm:text-2xl mb-4 mt-4 sm:mt-8">
       {props.children}
@@ -62,17 +108,17 @@ const CustomHeading = (props) => {
   );
 };
 
-const CustomQuote = (props) => (
+const CustomQuote: React.FC<CustomQuoteProps> = (props) => (
   <blockquote className="border-l-2 sm:border-l-4 border-gray-600 pl-2 sm:pl-4 italic mb-4">
     {props.children}
   </blockquote>
 );
 
-const CustomListItem = (props) => (
+const CustomListItem: React.FC<CustomListItemProps> = (props) => (
   <li className="list-disc mb-1 sm:mb-2">{props.children}</li>
 );
 
-const CustomLink = (props) => (
+const CustomLink: React.FC<CustomLinkProps> = (props) => (
   <a
     href={props.mark.href}
     className="text-blue-600 underline hover:text-blue-800"
@@ -81,31 +127,36 @@ const CustomLink = (props) => (
   </a>
 );
 
+
+const defaultRenderers = {
+  block: (props: { node: any; children: React.ReactNode }) => {
+    const style = props.node.style;
+
+    if (style === "normal") {
+      return <CustomParagraph>{props.children}</CustomParagraph>;
+    }
+
+    if (["h1", "h2", "h3", "h4", "h5", "h6"].includes(style)) {
+      return <CustomHeading {...props}>{props.children}</CustomHeading>;
+    }
+
+    if (style === "blockquote") {
+      return <CustomQuote>{props.children}</CustomQuote>;
+    }
+
+    if (style === "li") {
+      return <CustomListItem>{props.children}</CustomListItem>;
+    }
+
+    // 他のブロックタイプのレンダリングロジックをここに追加
+
+    return <p>{props.children}</p>;
+  },
+};
+
 const serializers = {
   types: {
-    block: (props) => {
-      const style = props.node.style;
-
-      if (style === "normal") {
-        return <CustomParagraph>{props.children}</CustomParagraph>;
-      }
-
-      if (["h1", "h2", "h3", "h4", "h5", "h6"].includes(style)) {
-        return <CustomHeading {...props}>{props.children}</CustomHeading>;
-      }
-
-      if (style === "blockquote") {
-        return <CustomQuote>{props.children}</CustomQuote>;
-      }
-
-      if (style === "li") {
-        return <CustomListItem>{props.children}</CustomListItem>;
-      }
-
-      // 他のブロックタイプのレンダリングロジックをここに追加
-
-      return BlockContent.defaultSerializers.types.block(props);
-    },
+    block: defaultRenderers.block,
   },
   marks: {},
 };
@@ -128,6 +179,7 @@ const ArticlePage = async ({ params: { slug } }) => {
             width={600}
             height={425}
             quality={100}
+            alt=""
           />
         </div>
 

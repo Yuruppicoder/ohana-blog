@@ -2,6 +2,9 @@
 import { useState } from "react";
 import { useSpring, animated } from "@react-spring/web";
 import Image from "next/image";
+import { Properties } from "csstype"
+
+type Position = Properties['position']
 
 const Card = ({ image, header, content }) => {
   // オフセットを管理するための State
@@ -65,7 +68,7 @@ const Card = ({ image, header, content }) => {
 
   const cardInfoStyle = {
     padding: "20px",
-    position: "absolute",
+    position: "absolute" as Position,
     bottom: "0",
     color: "#fff",
     transform: hover ? "translateY(0)" : "translateY(40%)",
@@ -77,7 +80,7 @@ const Card = ({ image, header, content }) => {
 
   const cardBgStyle = {
     opacity: "1",
-    position: "absolute",
+    position: "absolute" as Position,
     top: "50%",
     left: "50%",
     transform: hover
@@ -96,7 +99,6 @@ const Card = ({ image, header, content }) => {
   return (
     <animated.div
       style={springProps}
-      onMouseMove={(e) => handleOffset(e, e.clientX, e.clientY)}
       onMouseMove={(e) => handleOffset(e, e.clientX, e.clientY)}
       onMouseLeave={() => setOffset({ x: 0, y: 0 })}
       onTouchMove={(e) =>

@@ -30,7 +30,7 @@ const Header = () => {
   const { theme, setTheme, resolvedTheme } = useTheme();
 
   // 表示されているテーマを管理するための State
-  const [displayedTheme, setDisplayedTheme] = useState(null);
+  const [displayedTheme, setDisplayedTheme] = useState<string | null | undefined>(null);
 
   // resolvedTheme が変更されたときに、displayedTheme を更新する
   useEffect(() => {

@@ -24,7 +24,7 @@ const searchQuery = `
 `;
 
 export default async function SearchBar(context) {
-  const searchParams = context.searchParams.search;
+  const searchParams = context.searchParams.search || "";
 
   const result = await sanityClient.fetch(searchQuery, {
     searchQuery: searchParams,
