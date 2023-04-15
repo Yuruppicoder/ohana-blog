@@ -1,7 +1,12 @@
 import ArticleCards from "@/components/ArticleCards";
 import { sanityClient } from "@/libs/client";
 import Link from "next/link";
+import type { Metadata } from "next";
 
+export const metadata: Metadata = {
+  title: 'Ohana 日記',
+  description: 'Ohana日記は、毎日の経験や学びを綴った日記を通じて成長を記録するウェブサイトです。日々の生活で得た気づきや知識を共有し、自己向上を目指す場を提供します。',
+}
 
 async function fetchPostsByDate(date) {
   const query = `*[_type == "post" && _createdAt match $date]{
