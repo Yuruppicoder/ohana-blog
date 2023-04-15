@@ -1,91 +1,82 @@
-import Image from 'next/image'
-import { Inter } from 'next/font/google'
-import styles from './page.module.css'
+import ArticleCards from "@/components/ArticleCards";
+import { sanityClient } from "@/libs/client";
+import Link from "next/link";
 
-const inter = Inter({ subsets: ['latin'] })
 
-export default function Home() {
+async function fetchPostsByDate(date) {
+  const query = `*[_type == "post" && _createdAt match $date]{
+    _id,
+    title,
+    author->{
+      name,
+      image{
+        asset->{
+          _id,
+          url
+        }
+      },
+    },
+    "mainImageUrl": mainImage.asset->url,
+    _createdAt,
+    slug
+  }`;
+
+  const posts = await sanityClient.fetch(query, { date });
+  return posts;
+}
+
+function getTargetDate(pageParams) {
+  const currentDate = new Date();
+  currentDate.setMonth(currentDate.getMonth() - pageParams);
+  const y = currentDate.getFullYear();
+  const m = (currentDate.getMonth() + 1).toString().padStart(2, "0");
+  return `${y}-${m}`;
+}
+
+async function getPostsData(pageParams) {
+  const targetDate = getTargetDate(pageParams);
+  const posts = await fetchPostsByDate(targetDate);
+  return { posts, top: pageParams === 0 };
+}
+
+export default async function Home({ searchParams }) {
+  const pageParams = parseInt(searchParams.page, 10) || 0;
+  const { posts, top } = await getPostsData(pageParams);
+
   return (
-    <main className={styles.main}>
-      <div className={styles.description}>
-        <p>
-          Get started by editing&nbsp;
-          <code className={styles.code}>src/app/page.tsx</code>
-        </p>
-        <div>
-          <a
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{' '}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className={styles.vercelLogo}
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
-        </div>
-      </div>
-
-      <div className={styles.center}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-        <div className={styles.thirteen}>
-          <Image src="/thirteen.svg" alt="13" width={40} height={31} priority />
-        </div>
-      </div>
-
-      <div className={styles.grid}>
-        <a
-          href="https://beta.nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={inter.className}>
-            Docs <span>-&gt;</span>
+    <main className="max-w-6xl w-full mx-auto flex flex-col items-center">
+      {posts.length > 0 ? (
+        <>
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mt-5 p-3 rounded-full border-b-blue-500 border-b-8">
+            {`${new Date(posts[0]._createdAt).getFullYear()}年${
+              new Date(posts[0]._createdAt).getMonth() + 1
+            }月の日記`}
           </h2>
-          <p className={inter.className}>
-            Find in-depth information about Next.js features and API.
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={inter.className}>
-            Templates <span>-&gt;</span>
+          <ArticleCards posts={posts} />
+          <div className="flex mb-8 p-3">
+            <Link
+              className="px-5 py-3 border mt-8 rounded"
+              href={`?page=${pageParams + 1}`}
+            >{` 次のページへ → `}</Link>
+            {!top && (
+              <Link
+                className="px-5 py-3 border mt-8 rounded"
+                href={`?page=${pageParams - 1}`}
+              >{` ← 前のページへ`}</Link>
+            )}
+          </div>
+        </>
+      ) : (
+        <>
+          <h2 className="p-5 text-2xl sm:text-3xl md:text-4xl font-bold w-full text-center">
+            日記はありません。
           </h2>
-          <p className={inter.className}>Explore the Next.js 13 playground.</p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={inter.className}>
-            Deploy <span>-&gt;</span>
-          </h2>
-          <p className={inter.className}>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
+          <Link
+            className="px-5 py-3 border mt-8 rounded"
+            href={`?page=${pageParams - 1}`}
+          >{` ←前のページへ`}</Link>
+        </>
+      )}
     </main>
-  )
+  );
 }
